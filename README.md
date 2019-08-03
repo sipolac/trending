@@ -1,2 +1,4 @@
 # trending
-Methods for determining whether a series is "trending"
+Methods for determining trending-ness
+
+**Under construction...**

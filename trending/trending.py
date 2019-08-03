@@ -3,6 +3,8 @@
 """
 Author: Chris Sipola
 Created: 2019-08-02
+
+Methods for determining trending-ness.
 """
 from functools import reduce
 from math import ceil, exp, sqrt
@@ -16,48 +18,7 @@ import random
 # -----------------------------------------------------------------------------
 
 
-def rbf(x, x2, sigma):
-    """Radial basis function. Sigma is the width parameter."""
-    return exp(-(x - x2)**2 / (2 * sigma**2))
-
-
-# def smooth(a, sigma, window=None):
-#     """Smooths list of values using RBF.
-
-#     Args:
-#         a: List of floats representing time series
-#         sigma: Float for width parameter for RBF
-
-#     Returns:
-#         List of smoothed values
-
-#     >>> smooth([1, 3, 2], 1)
-#     [1.7741104349160406, 2.1777941428164094, 2.2705118487351643]
-#     """
-#     if window is None:
-#         window = ceil(3 * sigma) * 2 + 1
-#     smoothed = list()
-#     for i in range(window, len(a) - window):
-#     # for i, x in enumerate(a):
-#         low, high = i - window, i + window + 1
-#         print(low, high)
-#         weights = [rbf(i, j, sigma) for j in range(low, high)]
-#         print(weights)
-#         weighted = [w * x2 for w, x2 in zip(weights, a[high:low])]
-#         print(weighted)
-#         # weights = [rbf(i, j, sigma) for j in range(len(a))]
-#         # weighted = [w * x2 for w, x2 in zip(weights, a)]
-#         x_smooth = sum(weighted) / sum(weights)
-#         smoothed.append(x_smooth)
-#     return smoothed
-
-
-def smooth(a, window, sigma=None):
-    """Moving average."""
-    return [mean(a[i:i+window]) for i in range(len(a)-window+1)]
-
-
-def compute_rates(a):
+def _compute_rates(a):
     """Computes rates between consecutive values in input list.
 
     In the output list, 1 represents no change, 2 doubling, 0.5 halving, etc.
@@ -70,20 +31,20 @@ def compute_rates(a):
     return rates
 
 
-def geom_mean(rates, weights):
+def _geom_mean(rates, weights):
     """Computes weighted geometric mean."""
     weighted = [r**w for r, w in zip(rates, weights)]
     gmean = reduce(mul, weighted)**(1 / sum(weights))
     return gmean
 
 
-def compute_decaying_weights(n, p):
+def _compute_decaying_weights(n, p):
     """Computes weights that decay exponentially at the rate of p."""
     weights = [p**(n - i - 1) for i in range(n)]
     return weights
 
 
-def trending_score(a, p, window=None, pseudo_count=0):
+def trending_score(a, p):
     """Computes geometric mean of growth rates, with more weight on recent obs.
 
     Args:
@@ -91,9 +52,6 @@ def trending_score(a, p, window=None, pseudo_count=0):
         p: Float for p parameter in decaying weights. 0 gives all weight
           to most recent observation and 1 gives equal weight to all
           observations
-        sigma: Float for width parameter for RBF function used in smoothing
-        pseudo_count: Float for how may values to add to each value in input
-          list
 
     Returns:
         Float for weighted geometric mean of growth rates, where 1 represents
@@ -106,39 +64,36 @@ def trending_score(a, p, window=None, pseudo_count=0):
     """
     if len(a) < 2:
         raise Exception('input list `a` must have more than 1 value')
-    # if sigma is not None:
-    #     a = smooth(a, sigma)
-    if window is not None:
-        a = smooth(a, window)
-    if pseudo_count > 0:
-        a = [x + pseudo_count for x in a]
-    rates = compute_rates(a)
-    weights = compute_decaying_weights(len(rates), p)
-    gmean = geom_mean(rates, weights)
+    rates = _compute_rates(a)
+    weights = _compute_decaying_weights(len(rates), p)
+    gmean = _geom_mean(rates, weights)
     return gmean
 
 
-# -----------------------------------------------------------------------------
-# Helper functions
-# -----------------------------------------------------------------------------
-
-
-def sum_of_finite_geom(r, n):
+def _sum_of_finite_geom(r, n):
     return (1 - r**(n + 1)) / (1 - r)
 
 
-def sum_of_infinite_geom(r):
+def _sum_of_infinite_geom(r):
     return 1 / (1 - r)
 
 
 def compute_weight_frac(p, n, total_n=None):
-    """Computes fraction of total weight represented by first n obs."""
+    """Computes fraction of total weight represented by first n obs.
+    
+    p: Float for p parameter in decaying weights. 0 gives all weight
+      to most recent observation and 1 gives equal weight to all
+      observations
+    n: Int for number of observations to have specified fraction of weight
+    total_n: Float for total number of observations. If None, will use
+      inifite geometric sum instead
+    """
     # n is inclusive in finite sum function so need to subtract 1.
     if total_n is None:
-        total_weight = sum_of_infinite_geom(p)
+        total_weight = _sum_of_infinite_geom(p)
     else:
-        total_weight = sum_of_finite_geom(p, total_n - 1)
-    frac = sum_of_finite_geom(p, n - 1) / total_weight
+        total_weight = _sum_of_finite_geom(p, total_n - 1)
+    frac = _sum_of_finite_geom(p, n - 1) / total_weight
     return frac
 
 
@@ -146,8 +101,10 @@ def find_p(frac, n, total_n=None, error_bound=1e-6):
     """Finds p s.t. the first n obs make up specified fraction of total weight.
 
     Args:
-        n: Int for number of observations to have specified fraction of weight
         frac: Float for fraction of weight of first n observations
+        n: Int for number of observations to have specified fraction of weight
+        total_n: Float for total number of observations. If None, will use
+          inifite geometric sum instead
         error_bound: Error bound of p
 
     Returns:
@@ -199,8 +156,8 @@ def generate_series(num_series, n):
 def test_weight_summations():
     n = 10
     p = 0.9
-    actual = sum(compute_decaying_weights(n, p))
-    expected = sum_of_finite_geom(p, n - 1)
+    actual = sum(_compute_decaying_weights(n, p))
+    expected = _sum_of_finite_geom(p, n - 1)
     assert abs(actual - expected) < 1e-6
 
 
