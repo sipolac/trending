@@ -3,4 +3,4 @@ A simple method for determining trending-ness. It's a problem I started thinking
 
 The code for computing recent growth uses no libraries outside of the set of standard Python 3 libraries.
 
-Please see (demo)[https://github.com/sipolac/trending/demo.ipynb].
+Please see [demo](https://github.com/sipolac/trending/demo.ipynb).
