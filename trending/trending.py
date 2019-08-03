@@ -118,7 +118,7 @@ def find_r(frac, n, total_n=None, error_bound=1e-6):
     Returns:
         Float for decay rate
 
-    >>> find_p(0.5, 10)  # r such that last 10 obs make up 50% of total weight
+    >>> find_r(0.5, 10)  # r such that last 10 obs make up 50% of total weight
     0.9330339431762695
     """
     low, high = 0, 1
