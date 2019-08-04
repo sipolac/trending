@@ -91,8 +91,8 @@ def compute_weight_frac(r, n, total_n=None):
     Args:
         r: Float for decay rate
         n: Int for number of most recent observations
-        total_n: Float for total number of observations. If None, will use
-          inifite geometric sum instead
+        total_n: Float for total number of observations. If None, uses
+          infinite geometric sum instead
 
     Returns:
         Float for fraction
