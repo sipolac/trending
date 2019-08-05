@@ -4,7 +4,7 @@
 Author: Chris Sipola
 Created: 2019-08-02
 
-Methods for determining trending-ness.
+Functions for quantifying "trending"-ness.
 
 Some notes on "notation":
 > `a` is used to represent a series/list/array of interest, in the style of
@@ -79,7 +79,7 @@ def _geom_sum(r, n):
     return (1 - r**(n + 1)) / (1 - r)
 
 
-def compute_weight_frac(r, n, total_n=None):
+def compute_weight_frac(r, last_n, total_n=None):
     """Computes fraction of total weight represented by last n obs.
 
     That is, it computes:
@@ -90,9 +90,9 @@ def compute_weight_frac(r, n, total_n=None):
 
     Args:
         r: Float for decay rate
-        n: Int for number of most recent observations
-        total_n: Float for total number of observations. If None, uses
-          infinite geometric sum instead
+        last_n: Int for number of most recent observations
+        total_n: Int for total number of observations. If None, computes
+          the infinite geometric sum instead
 
     Returns:
         Float for fraction
@@ -100,7 +100,7 @@ def compute_weight_frac(r, n, total_n=None):
     # n is inclusive in finite sum function so need to subtract 1.
     if total_n is None:
         total_n = float('inf')
-    frac = _geom_sum(r, n - 1) / _geom_sum(r, total_n - 1)
+    frac = _geom_sum(r, last_n - 1) / _geom_sum(r, total_n - 1)
     return frac
 
 
