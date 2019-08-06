@@ -52,8 +52,9 @@ def recent_growth(a, r):
 
     Args:
         a: List of floats for which to compute recent growth
-        r: Float for decay rate. 0 gives all weight to most recent observation
-          and 1 gives equal weight to all observations
+        r: Float for decay rate. At the extremes, 1 gives equal weight to
+          each observation, and (because 0**0 == 1 in Python) 0 gives all
+          the weight to the most recent observation
 
     Returns:
         Float for weighted geometric mean of growth rates
@@ -65,6 +66,8 @@ def recent_growth(a, r):
     """
     if len(a) < 2:
         raise Exception('input list `a` must have more than 1 value')
+    if r < 0 or r > 1:
+        raise Exception(f'`r` must be between 0 and 1 (inclusive)')
     growth_list = _compute_growth(a)
     weights = _decaying_weights(len(growth_list), r)
     gmean = _geom_mean(growth_list, weights)
@@ -104,15 +107,15 @@ def compute_weight_frac(r, last_n, total_n=None):
     return frac
 
 
-def find_r(frac, n, total_n=None, error_bound=1e-6):
+def find_r(frac, last_n, total_n=None, error_bound=1e-6):
     """Finds r s.t. the last n obs make up specified fraction of total weight.
 
     Args:
-        frac: Float for fraction of total weight represented by last n
+        frac: Float for proportion of total weight represented by last n
           observations
         n: Int for number of most recent observations
         total_n: Float for total number of observations. If None, will use
-          inifite geometric sum instead
+          infinite geometric sum instead
         error_bound: Error bound of r
 
     Returns:
@@ -121,11 +124,14 @@ def find_r(frac, n, total_n=None, error_bound=1e-6):
     >>> find_r(0.5, 10)  # r such that last 10 obs make up 50% of total weight
     0.9330339431762695
     """
+    if total_n is not None and last_n / total_n >= frac:
+        return 1
+
     low, high = 0, 1
     r = (low + high) / 2
-    test_frac = compute_weight_frac(r, n, total_n)
+    test_frac = compute_weight_frac(r, last_n, total_n)
     while high - low > error_bound:
-        test_frac = compute_weight_frac(r, n, total_n)
+        test_frac = compute_weight_frac(r, last_n, total_n)
         if test_frac > frac:
             low = r
         elif test_frac < frac:

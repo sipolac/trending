@@ -24,3 +24,9 @@ def test_find_r():
     p = trending.find_r(frac, n, error_bound=error_bound)
     actual_frac = trending.compute_weight_frac(p, n)
     assert abs(actual_frac - frac) < 1e-3
+
+    assert trending.find_r(0.5, 5, 10) == 1
+    assert trending.find_r(0.5, 5, 10) == 1
+    assert trending.find_r(0.5, 5, 11) < 1
+    assert trending.find_r(0.7, 7, 10) == 1
+    assert trending.find_r(0.7, 7, 11) < 1
