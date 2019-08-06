@@ -17,10 +17,10 @@ def test_weight_summations():
     assert abs(actual - expected) < 1e-6
 
 
-def test_find_p():
+def test_find_r():
     n = 10
     frac = 0.5
     error_bound = 1e-6
-    p = trending.find_p(frac, n, error_bound=error_bound)
+    p = trending.find_r(frac, n, error_bound=error_bound)
     actual_frac = trending.compute_weight_frac(p, n)
     assert abs(actual_frac - frac) < 1e-3
