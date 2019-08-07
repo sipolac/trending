@@ -67,7 +67,7 @@ def recent_growth(a, r):
     if len(a) < 2:
         raise Exception('input list `a` must have more than 1 value')
     if r < 0 or r > 1:
-        raise Exception(f'`r` must be between 0 and 1 (inclusive)')
+        raise Exception('`r` must be between 0 and 1 (inclusive)')
     growth_list = _compute_growth(a)
     weights = _decaying_weights(len(growth_list), r)
     gmean = _geom_mean(growth_list, weights)
